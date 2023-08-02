@@ -1,9 +1,13 @@
 #![no_main]
 #![no_std]
 
+pub mod timer;
+
+use core::time::Duration;
 use aarch64_cpu::asm::nop;
 
 use panic_halt as _;
+use timer::spin_for;
 use tock_registers::interfaces::Readable;
 
 // https://datasheets.raspberrypi.com/bcm2711/bcm2711-peripherals.pdf
@@ -27,17 +31,13 @@ pub extern "C" fn _start() -> ! {
             core::ptr::write_volatile((GPIO_START + 0x20) as *mut u32, 1 << (42-32));
 
             // Wait
-            for _ in 0..500000 {
-                nop();
-            }
+            spin_for(Duration::from_millis(500));
 
             // Set GPIO 42 to LOW with GPCLR[42-32]
             core::ptr::write_volatile((GPIO_START + 0x02c) as *mut u32, 1 << (42-32));
 
             // Wait
-            for _ in 0..500000 {
-                nop();
-            }
+            spin_for(Duration::from_millis(500));
         }
     }
 }
