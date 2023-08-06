@@ -12,7 +12,8 @@ impl GenericTimerCounterValue {
 
     #[inline(always)]
     fn frequency() -> u64 {
-        CNTFRQ_EL0.get()
+        // CNTFRQ_EL0.get()
+        500_000_000/10
     }
 }
 
@@ -32,7 +33,7 @@ impl From<GenericTimerCounterValue> for Duration {
             return Duration::ZERO;
         }
 
-        let frequency = CNTFRQ_EL0.get();
+        let frequency: u64 = GenericTimerCounterValue::frequency();
 
         // Div<NonZeroU64> implementation for u64 cannot panic.
         let secs = counter_value.0 / GenericTimerCounterValue::frequency();
