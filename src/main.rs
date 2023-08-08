@@ -8,6 +8,8 @@ use timer::spin_for;
 
 use core::{panic::PanicInfo, time::Duration};
 use tock_registers::interfaces::Readable;
+use bcm2711_hal::gpio::pin::{Pin, PushPullOutput, PinId, Gpio42};
+use embedded_hal::digital::v2::OutputPin;
 
 // https://datasheets.raspberrypi.com/bcm2711/bcm2711-peripherals.pdf
 const START:            usize = 0xFE00_0000; // Based on section 1.2 of manual
@@ -22,22 +24,14 @@ pub extern "C" fn _start() -> ! {
         aarch64_cpu::asm::wfe();
     }
 
-    unsafe {
-        // Set GPIO 42 with GPFSEL4[8:6] = 0b001
-        core::ptr::write_volatile((GPIO_START + 0x10) as *mut u32, 0b001 << 6);
-        loop {
-            // Set GPIO 42 to HIGH with GPSET1
-            core::ptr::write_volatile((GPIO_START + 0x20) as *mut u32, 1 << (42-32));
+    let led_pin: Pin<Gpio42, <Gpio42 as PinId>::Reset> = unsafe { Pin::new() };
+    let mut led_pin: Pin<_, PushPullOutput> = led_pin.into();
 
-            // Wait
-            spin_for(Duration::from_millis(500));
-
-            // Set GPIO 42 to LOW with GPCLR[42-32]
-            core::ptr::write_volatile((GPIO_START + 0x02c) as *mut u32, 1 << (42-32));
-
-            // Wait
-            spin_for(Duration::from_millis(500));
-        }
+    loop {
+        led_pin.set_high().unwrap();
+        spin_for(Duration::from_millis(200));
+        led_pin.set_low().unwrap();
+        spin_for(Duration::from_millis(1000));
     }
 }
 
