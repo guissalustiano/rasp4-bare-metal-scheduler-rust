@@ -1,9 +1,15 @@
 #![no_main]
 #![no_std]
 
+#![feature(const_mut_refs)]
+
 pub mod timer;
+pub mod gpio;
+pub mod pl011_uart;
+
 
 use aarch64_cpu::asm::nop;
+use gpio::Gpio;
 use timer::spin_for;
 
 use core::{panic::PanicInfo, time::Duration};
@@ -22,22 +28,22 @@ pub extern "C" fn _start() -> ! {
         aarch64_cpu::asm::wfe();
     }
 
-    unsafe {
-        // Set GPIO 42 with GPFSEL4[8:6] = 0b001
-        core::ptr::write_volatile((GPIO_START + 0x10) as *mut u32, 0b001 << 6);
-        loop {
-            // Set GPIO 42 to HIGH with GPSET1
-            core::ptr::write_volatile((GPIO_START + 0x20) as *mut u32, 1 << (42-32));
+    let mut gpio = Gpio::new();
 
-            // Wait
-            spin_for(Duration::from_millis(500));
+    // Set GPIO 42 with GPFSEL4[8:6] = 0b001
+    gpio.pin_42_config_output();
+    loop {
+        // Set GPIO 42 to HIGH with GPSET1
+        gpio.pin_42_set();
 
-            // Set GPIO 42 to LOW with GPCLR[42-32]
-            core::ptr::write_volatile((GPIO_START + 0x02c) as *mut u32, 1 << (42-32));
+        // Wait
+        spin_for(Duration::from_millis(500));
 
-            // Wait
-            spin_for(Duration::from_millis(500));
-        }
+        // Set GPIO 42 to LOW with GPCLR[42-32]
+        gpio.pin_42_clr();
+
+        // Wait
+        spin_for(Duration::from_millis(500));
     }
 }
 
