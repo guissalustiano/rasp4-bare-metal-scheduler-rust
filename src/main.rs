@@ -8,7 +8,7 @@ use timer::spin_for;
 
 use core::{panic::PanicInfo, time::Duration};
 use tock_registers::interfaces::Readable;
-use bcm2711_hal::gpio::pin::{Pin, PushPullOutput, PinId, Gpio42};
+use bcm2711_hal::gpio::pin::{Pin, PushPullOutput, PinId, Gpio0};
 use embedded_hal::digital::v2::OutputPin;
 
 // https://datasheets.raspberrypi.com/bcm2711/bcm2711-peripherals.pdf
@@ -24,13 +24,13 @@ pub extern "C" fn _start() -> ! {
         aarch64_cpu::asm::wfe();
     }
 
-    let led_pin: Pin<Gpio42, <Gpio42 as PinId>::Reset> = unsafe { Pin::new() };
-    let mut led_pin: Pin<_, PushPullOutput> = led_pin.into_mode();
+    let pin: Pin<Gpio0, <Gpio0 as PinId>::Reset> = unsafe { Pin::new() };
+    let mut pin: Pin<_, PushPullOutput> = pin.into_mode();
 
     loop {
-        led_pin.set_high().unwrap();
+        pin.set_high().unwrap();
         spin_for(Duration::from_millis(200));
-        led_pin.set_low().unwrap();
+        pin.set_low().unwrap();
         spin_for(Duration::from_millis(1000));
     }
 }
