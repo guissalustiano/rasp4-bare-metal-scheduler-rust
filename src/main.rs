@@ -9,6 +9,8 @@ use timer::spin_for;
 use core::{panic::PanicInfo, time::Duration};
 use tock_registers::interfaces::Readable;
 
+use bcm2711_hal::pac::GPIO;
+
 // https://datasheets.raspberrypi.com/bcm2711/bcm2711-peripherals.pdf
 const START:            usize = 0xFE00_0000; // Based on section 1.2 of manual
 const GPIO_OFFSET:      usize = 0x0020_0000; // Based on section 5.2 of manual, also check that
@@ -24,16 +26,19 @@ pub extern "C" fn _start() -> ! {
 
     unsafe {
         // Set GPIO 42 with GPFSEL4[8:6] = 0b001
-        core::ptr::write_volatile((GPIO_START + 0x10) as *mut u32, 0b001 << 6);
+        (*GPIO::ptr()).gpfsel4.write_with_zero(|w| w.fsel42().output());
+        // (*GPIO::ptr()).gpfsel4.write_with_zero(|w| w.bits(1 << 6));
         loop {
             // Set GPIO 42 to HIGH with GPSET1
-            core::ptr::write_volatile((GPIO_START + 0x20) as *mut u32, 1 << (42-32));
+            (*GPIO::ptr()).gpset1.write_with_zero(|w| w.set42().set_bit());
+            // (*GPIO::ptr()).gpset1.write_with_zero(|w| w.bits(1 << 10));
 
             // Wait
             spin_for(Duration::from_millis(500));
 
             // Set GPIO 42 to LOW with GPCLR[42-32]
-            core::ptr::write_volatile((GPIO_START + 0x02c) as *mut u32, 1 << (42-32));
+            (*GPIO::ptr()).gpclr1.write_with_zero(|w| w.clr42().clear_bit_by_one());
+            // (*GPIO::ptr()).gpclr1.write_with_zero(|w| w.bits(1 << 10));
 
             // Wait
             spin_for(Duration::from_millis(500));
