@@ -25,7 +25,7 @@ pub extern "C" fn _start() -> ! {
     }
 
     let led_pin: Pin<Gpio42, <Gpio42 as PinId>::Reset> = unsafe { Pin::new() };
-    let mut led_pin: Pin<_, PushPullOutput> = led_pin.into();
+    let mut led_pin: Pin<_, PushPullOutput> = led_pin.into_mode();
 
     loop {
         led_pin.set_high().unwrap();
